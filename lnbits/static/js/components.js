@@ -363,7 +363,7 @@ window.app.component('lnbits-update-balance', {
           if (res.data.success !== true) {
             throw new Error(res.data)
           }
-          credit = parseInt(scope.value)
+          let credit = parseFloat(scope.value)
           Quasar.Notify.create({
             type: 'positive',
             message: this.$t('credit_ok', {
@@ -677,7 +677,7 @@ window.app.component('lnbits-stat', {
       </div>
       <div>
         <span class='text-h4 text-bold q-my-none'>{{ value }}</span>
-        <span class='text-h5' v-if='msat != undefined'>sats</span>
+        <span class='text-h5' v-if='msat != undefined'>${String(SETTINGS.denomination).toLowerCase()}</span>
         <span class='text-h5' v-if='btc != undefined'>BTC</span>
       </div>
     </q-card-section>
@@ -727,11 +727,11 @@ window.app.component('lnbits-channel-balance', {
         <div class="row items-center justify-between">
           <span class="text-weight-thin">
             Local: {{ formatMsat(balance.local_msat) }}
-            sats
+            ${String(SETTINGS.denomination).toLowerCase()}
           </span>
           <span class="text-weight-thin">
             Remote: {{ formatMsat(balance.remote_msat) }}
-            sats
+            ${String(SETTINGS.denomination).toLowerCase()}
           </span>
         </div>
 
@@ -746,7 +746,7 @@ window.app.component('lnbits-channel-balance', {
             <q-badge
               color="white"
               text-color="accent"
-              :label="formatMsat(balance.total_msat) + ' sats'"
+              :label="formatMsat(balance.total_msat) + ' ' + String(SETTINGS.denomination).toLowerCase()"
             >
               {{ balance.alias }}
             </q-badge>
@@ -824,7 +824,7 @@ window.app.component('lnbits-stat', {
           </div>
           <div>
             <span class='text-h4 text-bold q-my-none'>{{ value }}</span>
-            <span class='text-h5' v-if='msat != undefined'>sats</span>
+            <span class='text-h5' v-if='msat != undefined'>${String(SETTINGS.denomination).toLowerCase()}</span>
             <span class='text-h5' v-if='btc != undefined'>BTC</span>
           </div>
         </q-card-section>

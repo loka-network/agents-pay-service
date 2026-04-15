@@ -79,11 +79,13 @@ window.PageWallet = {
           !this.g.isSatsDenomination ? this.g.denomination : this.receive.unit
         )
       } else {
-        return LNbits.utils.formatMsat(this.receive.amountMsat) + ' sat'
+        const isMist = ['mist', 'sui'].includes(this.g.denomination?.toLowerCase())
+        return LNbits.utils.formatMsat(this.receive.amountMsat) + (isMist ? ' mist' : ' sat')
       }
     },
     formattedSatAmount() {
-      return LNbits.utils.formatMsat(this.receive.amountMsat) + ' sat'
+      const isMist = ['mist', 'sui'].includes(this.g.denomination?.toLowerCase())
+      return LNbits.utils.formatMsat(this.receive.amountMsat) + (isMist ? ' mist' : ' sat')
     }
   },
   methods: {
@@ -104,15 +106,16 @@ window.PageWallet = {
       this.receive.data.memo = null
       this.receive.data.internalMemo = null
       this.receive.data.payment_hash = null
+      const baseUnit = typeof SETTINGS !== 'undefined' && ['mist', 'sui'].includes(SETTINGS.denomination?.toLowerCase()) ? SETTINGS.denomination.toUpperCase() : 'sat';
       this.receive.units = [
-        'sat',
+        baseUnit,
         ...(this.g.allowedCurrencies.length > 0
           ? this.g.allowedCurrencies
           : this.g.currencies)
       ]
       this.receive.unit = this.g.isFiatPriority
-        ? this.g.wallet.currency || 'sat'
-        : 'sat'
+        ? this.g.wallet.currency || baseUnit
+        : baseUnit
       this.receive.minMax = [0, 2100000000000000]
       this.receive.lnurl = null
     },
@@ -144,7 +147,7 @@ window.PageWallet = {
     },
     createInvoice() {
       this.receive.status = 'loading'
-      if (!this.g.isSatsDenomination) {
+      if (!this.g.isSatsDenomination && !['mist', 'sui'].includes(this.g.denomination?.toLowerCase())) {
         this.receive.data.amount = this.receive.data.amount * 100
       }
 
@@ -347,8 +350,9 @@ window.PageWallet = {
       })
 
       if (this.g.wallet.currency) {
+        const coinMultiplier = typeof SETTINGS !== 'undefined' && ['mist', 'sui'].includes(SETTINGS.denomination?.toLowerCase()) ? 1000000000 : 100000000;
         cleanInvoice.fiatAmount = LNbits.utils.formatCurrency(
-          ((cleanInvoice.sat / 1e8) * this.g.exchangeRate).toFixed(2),
+          ((cleanInvoice.sat / coinMultiplier) * this.g.exchangeRate).toFixed(2),
           this.g.wallet.currency
         )
       }
@@ -477,7 +481,7 @@ window.PageWallet = {
       LNbits.api
         .request('PATCH', '/api/v1/wallet', this.g.wallet.adminkey, data)
         .then(response => {
-          this.g.wallet = {...this.g.wallet, ...response.data}
+          this.g.wallet = { ...this.g.wallet, ...response.data }
           const walletIndex = this.g.user.wallets.findIndex(
             wallet => wallet.id === response.data.id
           )
@@ -523,7 +527,7 @@ window.PageWallet = {
         })
 
         return ndef
-          .scan({signal: this.nfcReaderAbortController.signal})
+          .scan({ signal: this.nfcReaderAbortController.signal })
           .then(() => {
             ndef.onreadingerror = () => {
               Quasar.Notify.create({
@@ -532,7 +536,7 @@ window.PageWallet = {
               })
             }
 
-            ndef.onreading = ({message}) => {
+            ndef.onreading = ({ message }) => {
               //Decode NDEF data from tag
               const textDecoder = new TextDecoder('utf-8')
 
@@ -578,7 +582,7 @@ window.PageWallet = {
           'POST',
           `/api/v1/payments/${this.receive.paymentReq}/pay-with-nfc`,
           this.g.wallet.adminkey,
-          {lnurl_w: lnurl}
+          { lnurl_w: lnurl }
         )
         .then(response => {
           dismissPaymentMsg()
@@ -635,22 +639,25 @@ window.PageWallet = {
         this.g.exchangeRate = this.$q.localStorage.getItem(
           'lnbits.exchangeRate.' + this.g.wallet.currency
         )
+        const coinMultiplier = typeof SETTINGS !== 'undefined' && ['mist', 'sui'].includes(SETTINGS.denomination?.toLowerCase()) ? 1000000000 : 100000000;
         this.g.fiatBalance =
-          (this.g.exchangeRate / 100000000) * this.g.wallet.sat
+          (this.g.exchangeRate / coinMultiplier) * this.g.wallet.sat
       }
     },
     'g.wallet'() {
       if (this.g.wallet.currency) {
         this.g.fiatTracking = true
+        const coinMultiplier = typeof SETTINGS !== 'undefined' && ['mist', 'sui'].includes(SETTINGS.denomination?.toLowerCase()) ? 1000000000 : 100000000;
         this.g.fiatBalance =
-          (this.g.exchangeRate / 100000000) * this.g.wallet.sat
+          (this.g.exchangeRate / coinMultiplier) * this.g.wallet.sat
       } else {
         this.g.fiatBalance = 0
         this.g.fiatTracking = false
       }
     },
     'g.isFiatPriority'() {
-      this.receive.unit = this.g.isFiatPriority ? this.g.wallet.currency : 'sat'
+      const baseUnit = typeof SETTINGS !== 'undefined' && ['mist', 'sui'].includes(SETTINGS.denomination?.toLowerCase()) ? SETTINGS.denomination.toUpperCase() : 'sat';
+      this.receive.unit = this.g.isFiatPriority ? this.g.wallet.currency : baseUnit
     },
     'g.fiatBalance'() {
       this.formattedFiatAmount = LNbits.utils.formatCurrency(
@@ -660,8 +667,9 @@ window.PageWallet = {
     },
     'g.exchangeRate'() {
       if (this.g.fiatTracking && this.g.wallet.currency) {
+        const coinMultiplier = typeof SETTINGS !== 'undefined' && ['mist', 'sui'].includes(SETTINGS.denomination?.toLowerCase()) ? 1000000000 : 100000000;
         this.g.fiatBalance =
-          (this.g.exchangeRate / 100000000) * this.g.wallet.sat
+          (this.g.exchangeRate / coinMultiplier) * this.g.wallet.sat
       }
     }
   }

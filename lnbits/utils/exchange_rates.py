@@ -8,6 +8,48 @@ from loguru import logger
 from lnbits.settings import ExchangeRateProvider, settings
 from lnbits.utils.cache import cache
 
+# Default exclude_from map: used to fill in missing fields when providers are
+# loaded from the database (old records may not have exclude_from set).
+# Build lazily on first use to avoid circular-import issues at module load time.
+_DEFAULT_PROVIDERS_EXCLUDE_FROM: dict[str, list[str]] | None = None
+
+
+def _get_default_exclude_from() -> dict[str, list[str]]:
+    global _DEFAULT_PROVIDERS_EXCLUDE_FROM
+    if _DEFAULT_PROVIDERS_EXCLUDE_FROM is None:
+        from lnbits.settings import ExchangeProvidersSettings
+        default_providers = ExchangeProvidersSettings().lnbits_exchange_rate_providers
+        _DEFAULT_PROVIDERS_EXCLUDE_FROM = {p.name: p.exclude_from for p in default_providers}
+    return _DEFAULT_PROVIDERS_EXCLUDE_FROM
+
+async def check_is_sui() -> bool:
+    cache_key = "is_sui_chain"
+    val = cache.get(cache_key)
+    if val is not None:
+        return val
+
+    is_sui = False
+    try:
+        from lnbits.wallets import get_funding_source
+        wallet = get_funding_source()
+        if hasattr(wallet, "rpc"):
+            from lnbits.wallets.lnd_grpc_files.lightning_pb2 import GetInfoRequest
+            req = GetInfoRequest()
+            res = await wallet.rpc.GetInfo(req)
+            if len(res.chains) > 0 and res.chains[0].chain == "sui":
+                is_sui = True
+        elif hasattr(wallet, "client"):
+            res = await wallet.client.get("/v1/getinfo")
+            if res.status_code == 200:
+                data = res.json()
+                if "chains" in data and len(data["chains"]) > 0 and data["chains"][0]["chain"] == "sui":
+                    is_sui = True
+    except Exception as e:
+        logger.debug(f"Failed to check if chain is SUI: {e}")
+
+    cache.set(cache_key, is_sui, 3600 if is_sui else 10)
+    return is_sui
+
 currencies = {
     "AED": "United Arab Emirates Dirham",
     "AFN": "Afghan Afghani",
@@ -239,10 +281,14 @@ async def btc_rates(currency: str) -> list[tuple[str, float]]:
     if currency.upper() not in allowed_currencies():
         raise ValueError(f"Currency '{currency}' not allowed.")
 
+    is_sui = await check_is_sui()
+    base_coin_upper = "SUI" if is_sui else "BTC"
+    base_coin_lower = base_coin_upper.lower()
+
     def replacements(ticker: str):
         return {
-            "FROM": "BTC",
-            "from": "btc",
+            "FROM": base_coin_upper,
+            "from": base_coin_lower,
             "TO": ticker.upper(),
             "to": ticker.lower(),
         }
@@ -252,6 +298,15 @@ async def btc_rates(currency: str) -> list[tuple[str, float]]:
     ) -> tuple[str, float] | None:
         if currency.lower() in provider.exclude_to:
             logger.warning(f"Provider {provider.name} does not support {currency}.")
+            return None
+
+        # Merge with code-default exclude_from in case the provider was loaded
+        # from the database without this field (old stored records default to []).
+        effective_exclude_from = provider.exclude_from or _get_default_exclude_from().get(provider.name, [])
+        if base_coin_lower in effective_exclude_from:
+            logger.debug(
+                f"Provider {provider.name} excluded for {base_coin_upper}."
+            )
             return None
 
         ticker = provider.convert_ticker(currency)
@@ -273,7 +328,7 @@ async def btc_rates(currency: str) -> list[tuple[str, float]]:
 
         except Exception as e:
             logger.warning(
-                f"Failed to fetch Bitcoin price "
+                f"Failed to fetch {base_coin_upper} price "
                 f"for {currency} from {provider.name}: {e}"
             )
 
@@ -290,24 +345,41 @@ async def btc_rates(currency: str) -> list[tuple[str, float]]:
 
 
 async def btc_price(currency: str) -> float:
+    is_sui = await check_is_sui()
+    coin_name = "SUI" if is_sui else "Bitcoin"
+
+    if is_sui:
+        try:
+            async with httpx.AsyncClient() as client:
+                r = await client.get(f"https://api.coingecko.com/api/v3/simple/price?ids=sui&vs_currencies={currency.lower()}")
+                r.raise_for_status()
+                data = r.json()
+                if "sui" in data and currency.lower() in data["sui"]:
+                    return float(data["sui"][currency.lower()])
+        except Exception as e:
+            logger.debug(f"CoinGecko SUI pricing failed: {e}")
+
     rates = await btc_rates(currency)
     if not rates:
-        logger.warning("Could not fetch any Bitcoin price.")
+        logger.warning(f"Could not fetch any {coin_name} price.")
         return 0.0
     elif len(rates) == 1:
-        logger.warning("Could only fetch one Bitcoin price.")
+        logger.warning(f"Could only fetch one {coin_name} price.")
 
     rates_values = [r[1] for r in rates]
     return sum(rates_values) / len(rates_values)
 
 
 async def get_fiat_rate_and_price_satoshis(currency: str) -> tuple[float, float]:
+    is_sui = await check_is_sui()
+    cache_key = f"sui-price-{currency}" if is_sui else f"btc-price-{currency}"
     price = await cache.save_result(
         lambda: btc_price(currency),
-        f"btc-price-{currency}",
+        cache_key,
         settings.lnbits_exchange_rate_cache_seconds,
     )
-    rate = float(100_000_000 / price) if price > 0 else 0.0
+    multiplier = 1_000_000_000 if is_sui else 100_000_000
+    rate = float(multiplier / price) if price > 0 else 0.0
     return rate, price
 
 

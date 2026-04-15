@@ -589,7 +589,7 @@ window.localisation.en = {
   funding_source_info: 'Funding Source Information',
   funding_source: 'Funding source: {wallet_class}',
   node_balance: 'Node balance: {balance} sats',
-  lnbits_balance: 'LNbits balance: {balance} sats',
+  lnbits_balance: 'LNbits balance: {balance} ' + (typeof SETTINGS !== 'undefined' && ['mist', 'sui'].includes(String(SETTINGS.denomination).toLowerCase()) ? 'SUI' : 'sats'),
   funding_reserve_percent: 'Funding reserve percentage: {percent} %',
   node_management: 'Node Management',
   node_management_not_supported:

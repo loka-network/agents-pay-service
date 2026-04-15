@@ -259,6 +259,8 @@ class CreateInvoice(BaseModel):
     @validator("unit")
     @classmethod
     def unit_is_from_allowed_currencies(cls, v):
+        if v.upper() in ["MIST", "SUI"]:
+            return v
         if v != "sat" and v not in allowed_currencies():
             raise ValueError("The provided unit is not supported")
         return v

@@ -57,14 +57,16 @@ window.app.component('lnbits-wallet-extra', {
         this.g.exchangeRate = this.$q.localStorage.getItem(
           'lnbits.exchangeRate.' + this.g.wallet.currency
         )
+        const coinMultiplier = typeof SETTINGS !== 'undefined' && ['mist', 'sui'].includes(SETTINGS.denomination?.toLowerCase()) ? 1000000000 : 100000000;
         this.g.fiatBalance =
-          (this.g.exchangeRate / 100000000) * this.g.wallet.sat
+          (this.g.exchangeRate / coinMultiplier) * this.g.wallet.sat
       }
       LNbits.api
         .request('GET', `/api/v1/rate/` + this.g.wallet.currency, null)
         .then(response => {
+          const coinMultiplier = typeof SETTINGS !== 'undefined' && ['mist', 'sui'].includes(SETTINGS.denomination?.toLowerCase()) ? 1000000000 : 100000000;
           this.g.fiatBalance =
-            (response.data.price / 100000000) * this.g.wallet.sat
+            (response.data.price / coinMultiplier) * this.g.wallet.sat
           this.g.exchangeRate = response.data.price.toFixed(2)
           this.g.fiatTracking = true
           this.$q.localStorage.set(
@@ -80,7 +82,7 @@ window.app.component('lnbits-wallet-extra', {
     }
   },
   created() {
-    if (this.g.wallet.currency !== '' && this.g.isSatsDenomination) {
+    if (this.g.wallet.currency !== '' && (this.g.isSatsDenomination || ['mist', 'sui'].includes(SETTINGS.denomination?.toLowerCase()))) {
       this.g.fiatTracking = true
       this.updateFiatBalance()
     } else {

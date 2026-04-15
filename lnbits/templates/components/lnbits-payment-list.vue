@@ -359,7 +359,7 @@
             </template>
           </q-td>
           <q-td
-            v-if="!g.isSatsDenomination"
+            v-if="!g.isSatsDenomination && !['mist', 'sui'].includes(g.denomination?.toLowerCase())"
             auto-width
             key="amount"
             :props="props"
@@ -368,6 +368,28 @@
               parseFloat(String(props.row.fsat).replaceAll(',', '')) / 100
             "
           >
+          </q-td>
+          <q-td
+            v-else-if="['mist', 'sui'].includes(g.denomination?.toLowerCase())"
+            auto-width
+            key="amount"
+            :props="props"
+            class="col1"
+          >
+            <span v-text="utils.formatBalance(props.row.sat, g.denomination)"></span>
+            <br />
+            <i v-if="props.row.extra.wallet_fiat_currency">
+              <span
+                v-text="
+                  formatCurrency(
+                    props.row.extra.wallet_fiat_amount,
+                    props.row.extra.wallet_fiat_currency
+                  )
+                "
+              >
+              </span>
+              <br />
+            </i>
           </q-td>
           <q-td class="col2" auto-width key="amount" v-else :props="props">
             <span v-text="props.row.fsat"></span>
@@ -380,7 +402,8 @@
                     props.row.extra.wallet_fiat_currency
                   )
                 "
-              ></span>
+              >
+              </span>
               <br />
             </i>
             <i v-if="props.row.extra.fiat_currency">
@@ -391,7 +414,8 @@
                     props.row.extra.fiat_currency
                   )
                 "
-              ></span>
+              >
+              </span>
             </i>
           </q-td>
           <q-dialog v-model="props.expand" :props="props" position="top">

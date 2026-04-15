@@ -120,21 +120,43 @@ window._lnbitsUtils = {
     return moment.utc(timestampMs).local().fromNow()
   },
   formatBalance(amount, denomination = 'sats') {
-    if (denomination === 'sats') {
+    let denom = (denomination === 'sats' && typeof SETTINGS !== 'undefined' && SETTINGS.denomination) ? SETTINGS.denomination : denomination;
+    if (denom.toLowerCase() === 'sats') {
       return LNbits.utils.formatSat(amount) + ' sats'
     }
-    return LNbits.utils.formatCurrency(amount / 100, denomination)
+    if (['mist', 'sui'].includes(denom.toLowerCase())) {
+      const suiAmount = amount / 1000000000;
+      return new Intl.NumberFormat(window.i18n.global.locale, {
+         minimumFractionDigits: 0,
+         maximumFractionDigits: 9
+      }).format(suiAmount) + ' SUI'
+    }
+    return LNbits.utils.formatCurrency(amount / 100, denom)
   },
   formatCurrency(value, currency) {
-    return new Intl.NumberFormat(window.i18n.global.locale, {
-      style: 'currency',
-      currency: currency || 'sat'
-    }).format(value)
+    let curr = (currency === 'sat' && typeof SETTINGS !== 'undefined' && SETTINGS.denomination) ? SETTINGS.denomination : (currency || 'sat');
+    if (curr.toUpperCase() === 'MIST' || curr.toUpperCase() === 'SUI') {
+      return new Intl.NumberFormat(window.i18n.global.locale).format(value) + ' ' + curr;
+    }
+    if (curr.toUpperCase() === 'SATS' || curr.toUpperCase() === 'SAT') {
+      return new Intl.NumberFormat(window.i18n.global.locale).format(value) + ' sats';
+    }
+    try {
+      return new Intl.NumberFormat(window.i18n.global.locale, {
+        style: 'currency',
+        currency: curr
+      }).format(value)
+    } catch (e) {
+      return new Intl.NumberFormat(window.i18n.global.locale).format(value) + ' ' + curr;
+    }
   },
   getCurrencySymbol(currency) {
     const code = (currency || '').toUpperCase()
     if (code === 'BTC' || code === 'XBT' || code === 'SAT' || code === 'SATS') {
       return '₿'
+    }
+    if (code === 'SUI' || code === 'MIST') {
+      return 'SUI'
     }
     try {
       const parts = new Intl.NumberFormat(window.i18n.global.locale, {

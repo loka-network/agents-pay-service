@@ -166,9 +166,16 @@ window.PagePayments = {
           }
           p.timeFrom = moment.utc(p.created_at).local().fromNow()
           p.outgoing = p.amount < 0
-          p.amount =
-            new Intl.NumberFormat(this.g.locale).format(p.amount / 1000) +
-            ' sats'
+          const amountSat = p.amount / 1000
+          const feeSat = p.fee / 1000
+          const denom = String(SETTINGS.denomination).toLowerCase()
+          if (['mist', 'sui'].includes(denom)) {
+            p.amount = LNbits.utils.formatBalance(amountSat, denom)
+          } else {
+            p.amount =
+              new Intl.NumberFormat(this.g.locale).format(amountSat) +
+              ' ' + denom
+          }
           if (p.extra?.wallet_fiat_amount) {
             p.amountFiat = this.formatCurrency(
               p.extra.wallet_fiat_amount,
@@ -178,8 +185,12 @@ window.PagePayments = {
           if (p.extra?.internal_memo) {
             p.internal_memo = p.extra.internal_memo
           }
-          p.fee_sats =
-            new Intl.NumberFormat(this.g.locale).format(p.fee / 1000) + ' sats'
+          if (['mist', 'sui'].includes(denom)) {
+            p.fee_sats = LNbits.utils.formatBalance(feeSat, denom)
+          } else {
+            p.fee_sats =
+              new Intl.NumberFormat(this.g.locale).format(feeSat) + ' ' + denom
+          }
 
           return p
         })
@@ -360,7 +371,13 @@ window.PagePayments = {
 
         const timeFrom = this.searchDate.from + 'T00:00:00'
         const timeTo = this.searchDate.to + 'T23:59:59'
-        this.lnbitsBalance = data.length ? data[data.length - 1].balance : 0
+        const rawBalance = data.length ? data[data.length - 1].balance : 0
+        const balanceDenom = String(SETTINGS.denomination).toLowerCase()
+        if (['mist', 'sui'].includes(balanceDenom)) {
+          this.lnbitsBalance = rawBalance / 1000000000
+        } else {
+          this.lnbitsBalance = rawBalance
+        }
         data = data.filter(p => {
           if (this.searchDate.from && this.searchDate.to) {
             return p.date >= timeFrom && p.date <= timeTo

@@ -1,4 +1,8 @@
 import multiprocessing as mp
+try:
+    mp.set_start_method("fork")
+except RuntimeError:
+    pass
 import time
 from pathlib import Path
 

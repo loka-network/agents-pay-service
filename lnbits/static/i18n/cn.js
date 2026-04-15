@@ -318,7 +318,7 @@ window.localisation.cn = {
   funding_source_info: '资金来源信息',
   funding_source: '资金来源：{wallet_class}',
   node_balance: '节点余额：{balance} sats',
-  lnbits_balance: 'LNbits 余额：{balance} sats',
+  lnbits_balance: 'LNbits 余额：{balance} ' + (typeof SETTINGS !== 'undefined' && ['mist', 'sui'].includes(String(SETTINGS.denomination).toLowerCase()) ? 'SUI' : 'sats'),
   funding_reserve_percent: '保留百分比: {percent} %',
   node_management: '节点管理',
   node_management_not_supported: '活动资金来源不支持节点管理',

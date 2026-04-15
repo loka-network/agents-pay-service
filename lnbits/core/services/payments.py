@@ -21,7 +21,7 @@ from lnbits.fiat import get_fiat_provider
 from lnbits.helpers import check_callback_url
 from lnbits.settings import settings
 from lnbits.utils.crypto import fake_privkey, random_secret_and_hash, verify_preimage
-from lnbits.utils.exchange_rates import fiat_amount_as_satoshis, satoshis_amount_as_fiat
+from lnbits.utils.exchange_rates import fiat_amount_as_satoshis, satoshis_amount_as_fiat, check_is_sui
 from lnbits.wallets import fake_wallet, get_funding_source
 from lnbits.wallets.base import (
     InvoiceResponse,
@@ -282,10 +282,14 @@ async def create_invoice(
         amount, user_wallet, currency, extra
     )
 
-    if amount_sat > settings.lnbits_max_incoming_payment_amount_sats:
+    is_sui = await check_is_sui()
+    sui_multiplier = 1_000_000_000 if is_sui else 1
+    max_incoming = settings.lnbits_max_incoming_payment_amount_sats * sui_multiplier
+
+    if amount_sat > max_incoming:
         raise InvoiceError(
-            f"Invoice amount {amount_sat} sats is too high. Max allowed: "
-            f"{settings.lnbits_max_incoming_payment_amount_sats} sats.",
+            f"Invoice amount {amount_sat} {'MIST' if is_sui else 'sats'} is too high. Max allowed: "
+            f"{max_incoming} {'MIST' if is_sui else 'sats'}.",
             status="failed",
         )
     if settings.is_wallet_max_balance_exceeded(
@@ -580,7 +584,7 @@ async def calculate_fiat_amounts(
 ) -> tuple[int, dict]:
     wallet_currency = wallet.currency or settings.lnbits_default_accounting_currency
     fiat_amounts: dict = extra or {}
-    if currency and currency != "sat":
+    if currency and currency.upper() not in ["SAT", "MIST", "SUI"]:
         amount_sat = await fiat_amount_as_satoshis(amount, currency)
         if currency != wallet_currency:
             fiat_amounts["fiat_currency"] = currency
@@ -947,12 +951,35 @@ def _validate_payment_request(
 
     max_sat = max_sat or settings.lnbits_max_outgoing_payment_amount_sats
     max_sat = min(max_sat, settings.lnbits_max_outgoing_payment_amount_sats)
+
+    # Note: _validate_payment_request is synchronous, so we scale it if the label ends with 'SUI'. 
+    # But since Bolt11 invoices for SUI are virtually non-existent, and this check is for outgoing payments
+    # we can just use an arbitrary safe scale if the max_amount checks are triggering too early.
+    # Actually, a better approach is to check if the max_sat is extremely large compared to BTC limits.
+    # But wait, we can just fetch is_sui outside and pass it down. 
+    # To maintain synchronous compatibility, we can just allow it if amount is MIST.
+    pass_max_sat = max_sat
+    if invoice.amount_msat > pass_max_sat * 1000 * 1_000_000_000:
+        pass_max_sat = pass_max_sat * 1_000_000_000 # assume SUI environment as a fallback for the synchronous check, or just raise as normal
+    
     if invoice.amount_msat > max_sat * 1000:
-        raise PaymentError(
-            f"Invoice amount {invoice.amount_msat // 1000} sats is too high. "
-            f"Max allowed: {max_sat} sats.",
-            status="failed",
-        )
+        # Check carefully if backend is expecting MIST.
+        is_mist_safe = False
+        try:
+            # Simple synchronous environment hack check
+            is_mist_safe = settings.lnbits_denomination == "SUI" or getattr(settings, 'lnbits_denomination', None) == "SUI"
+        except:
+            pass
+            
+        if is_mist_safe:
+           max_sat = max_sat * 1_000_000_000
+
+        if invoice.amount_msat > max_sat * 1000:
+            raise PaymentError(
+                f"Invoice amount {invoice.amount_msat // 1000} sats is too high. "
+                f"Max allowed: {max_sat} sats.",
+                status="failed",
+            )
 
     return invoice
 

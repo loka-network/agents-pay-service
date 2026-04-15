@@ -238,7 +238,7 @@
           <b v-text="receive.lnurl.domain"></b> is requesting an invoice:
         </p>
         <q-input
-          v-if="!g.isSatsDenomination"
+          v-if="!g.isSatsDenomination && !['mist', 'sui'].includes(g.denomination?.toLowerCase())"
           filled
           dense
           v-model="receive.data.amount"
@@ -278,7 +278,7 @@
             class="q-mt-md"
             ref="setAmount"
             filled
-            :pattern="receive.unit === 'sat' ? '\\d*' : '\\d*\\.?\\d*'"
+            :pattern="((receive.unit === 'sat') || (receive.unit?.toLowerCase() === 'mist')) ? '\\d*' : '\\d*\\.?\\d*'"
             inputmode="numeric"
             dense
             v-model.number="receive.data.amount"
@@ -740,8 +740,8 @@
                 dense
                 v-model.number="parse.data.amount"
                 :label="$t('amount') + ' (' + parse.data.unit + ') *'"
-                :mask="parse.data.unit == 'sat' ? '#' : ''"
-                :step="parse.data.unit == 'sat' ? '1' : '0.01'"
+                :mask="((parse.data.unit == 'sat') || (parse.data.unit?.toLowerCase() === 'mist')) ? '#' : ''"
+                :step="((parse.data.unit == 'sat') || (parse.data.unit?.toLowerCase() === 'mist')) ? '1' : 'any'"
                 fill-mask="0"
                 reverse-fill-mask
                 :min="parse.lnurlpay.minSendable / 1000"

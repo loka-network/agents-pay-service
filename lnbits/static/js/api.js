@@ -1,5 +1,12 @@
 window._lnbitsApi = {
   request(method, url, apiKey, data, options = {}) {
+    if (typeof SETTINGS !== 'undefined' && SETTINGS.denomination && ['mist', 'sui'].includes(SETTINGS.denomination.toLowerCase())) {
+      if (data && data.amount && (url.includes('/api/v1/payments') || url.includes('/users/api/v1/balance'))) {
+        if (!data.unit || data.unit === 'sat' || data.unit === 'MIST' || data.unit === 'SUI') {
+          data.amount = Math.round(data.amount * 1000000000);
+        }
+      }
+    }
     return axios({
       method: method,
       url: url,

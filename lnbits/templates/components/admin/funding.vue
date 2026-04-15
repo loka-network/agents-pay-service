@@ -21,15 +21,15 @@
             <li
               v-text="
                 $t('node_balance', {
-                  balance: (auditData.node_balance_sats || 0).toLocaleString()
-                })
+                  balance: formatBalance(auditData.node_balance_sats || 0)
+                }).replace(' sats', '')
               "
             ></li>
             <li
               v-text="
                 $t('lnbits_balance', {
-                  balance: (auditData.lnbits_balance_sats || 0).toLocaleString()
-                })
+                  balance: formatBalance(auditData.lnbits_balance_sats || 0)
+                }).replace(' sats', '')
               "
             ></li>
             <li

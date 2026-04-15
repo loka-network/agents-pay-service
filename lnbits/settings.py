@@ -148,6 +148,7 @@ class ExchangeRateProvider(BaseModel):
     api_url: str
     path: str
     exclude_to: list[str] = []
+    exclude_from: list[str] = []
     ticker_conversion: list[str] = []
 
     def convert_ticker(self, currency: str) -> str:
@@ -370,58 +371,72 @@ class ExchangeProvidersSettings(LNbitsSettings):
         default=[
             ExchangeRateProvider(
                 name="Binance",
-                api_url="https://api.binance.com/api/v3/ticker/price?symbol=BTC{TO}",
+                api_url="https://api.binance.com/api/v3/ticker/price?symbol={FROM}{TO}",
                 path="$.price",
                 exclude_to=["czk"],
                 ticker_conversion=["USD:USDT"],
             ),
             ExchangeRateProvider(
                 name="Blockchain",
-                api_url="https://blockchain.info/frombtc?currency={TO}&value=100000000",
+                api_url="https://blockchain.info/from{from}?currency={TO}&value=100000000",
                 path="",
                 exclude_to=[],
+                exclude_from=["sui"],
                 ticker_conversion=[],
             ),
             ExchangeRateProvider(
                 name="Exir",
-                api_url="https://api.exir.io/v1/ticker?symbol=btc-{to}",
+                api_url="https://api.exir.io/v1/ticker?symbol={from}-{to}",
                 path="$.last",
                 exclude_to=["czk", "eur"],
+                exclude_from=["sui"],
                 ticker_conversion=["USD:USDT"],
             ),
             ExchangeRateProvider(
                 name="Bitfinex",
-                api_url="https://api.bitfinex.com/v1/pubticker/btc{to}",
+                api_url="https://api.bitfinex.com/v1/pubticker/{from}{to}",
                 path="$.last_price",
                 exclude_to=["czk"],
+                exclude_from=["sui"],
                 ticker_conversion=[],
             ),
             ExchangeRateProvider(
                 name="Bitstamp",
-                api_url="https://www.bitstamp.net/api/v2/ticker/btc{to}/",
+                api_url="https://www.bitstamp.net/api/v2/ticker/{from}{to}/",
                 path="$.last",
                 exclude_to=["czk"],
+                exclude_from=["sui"],
                 ticker_conversion=[],
             ),
             ExchangeRateProvider(
                 name="Coinbase",
-                api_url="https://api.coinbase.com/v2/exchange-rates?currency=BTC",
+                api_url="https://api.coinbase.com/v2/exchange-rates?currency={FROM}",
                 path="$.data.rates.{TO}",
                 exclude_to=[],
                 ticker_conversion=[],
             ),
             ExchangeRateProvider(
                 name="Kraken",
-                api_url="https://api.kraken.com/0/public/Ticker?pair=XBT{TO}",
-                path="$.result.XXBTZ{TO}.c[0]",
+                api_url="https://api.kraken.com/0/public/Ticker?pair={FROM}{TO}",
+                path="$.result.*.c[0]",
                 exclude_to=["czk"],
+                exclude_from=["sui"],
                 ticker_conversion=[],
             ),
             ExchangeRateProvider(
                 name="yadio",
-                api_url="https://api.yadio.io/exrates/BTC",
-                path="$.BTC.{TO}",
+                api_url="https://api.yadio.io/exrates/{FROM}",
+                path="$.{FROM}.{TO}",
                 exclude_to=[],
+                exclude_from=["sui"],
+                ticker_conversion=[],
+            ),
+            ExchangeRateProvider(
+                name="CoinGecko",
+                api_url="https://api.coingecko.com/api/v3/simple/price?ids=sui&vs_currencies={to}",
+                path="$.sui.{to}",
+                exclude_to=[],
+                exclude_from=["btc"],
                 ticker_conversion=[],
             ),
         ]

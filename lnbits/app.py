@@ -211,6 +211,14 @@ async def check_funding_source() -> None:
             error_message, balance = await funding_source.status()
             if not error_message:
                 retry_counter = 0
+                
+                # Check for SUI chain and mutate denomination
+                from lnbits.utils.exchange_rates import check_is_sui
+                if await check_is_sui():
+                    settings.lnbits_denomination = "SUI"
+                else:
+                    settings.lnbits_denomination = "sats"
+
                 logger.success(
                     f"✔️ Backend {funding_source.__class__.__name__} connected "
                     f"and with a balance of {balance} msat."
