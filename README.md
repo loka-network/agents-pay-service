@@ -63,6 +63,24 @@ uv run lnbits --port 5000
 # or make dev
 ```
 
+### Production Deployment (10k+ Agents Scale)
+
+If you are running large-scale multi-agent simulations involving thousands of agents performing concurrent wallet operations, **do not use the default SQLite database**. SQLite uses file-level locking and will crash under high concurrency (`database is locked` errors).
+
+**1. Switch to PostgreSQL:**
+Set the database URL in your `.env`:
+```env
+LNBITS_DATABASE_URL="postgres://user:password@localhost:5432/agents_pay"
+```
+
+**2. Start with Uvicorn (Multi-Worker):**
+Run the service using `make prod` to utilize Uvicorn's asynchronous capabilities and worker pooling:
+```bash
+make prod
+# Under the hood, this executes:
+# uv run uvicorn lnbits.__main__:app --host 0.0.0.0 --port 5000 --workers 8 --limit-concurrency 1000
+```
+
 Configure your funding source and denomination in `.env`:
 
 ```env

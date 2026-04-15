@@ -13,7 +13,8 @@ from lnbits.core.crud.wallets import (
     create_wallet,
     get_wallets_paginated,
 )
-from lnbits.core.models import CreateWallet, KeyType, Wallet, WalletTypeInfo
+from lnbits.core.db import db
+from lnbits.core.models import CreateWallet, CreateWalletsBatch, KeyType, Wallet, WalletTypeInfo
 from lnbits.core.models.lnurl import StoredPayLink, StoredPayLinks
 from lnbits.core.models.misc import SimpleStatus
 from lnbits.core.models.users import Account, AccountId
@@ -217,3 +218,31 @@ async def api_create_wallet(
 
     # default WalletType.LIGHTNING:
     return await create_wallet(user_id=account_id.id, wallet_name=data.name)
+
+
+@wallet_router.post("/batch")
+async def api_create_wallets_batch(
+    data: CreateWalletsBatch, account_id: AccountId = Depends(check_account_id_exists)
+) -> list[Wallet]:
+    wallets = []
+    
+    for w_data in data.wallets:
+        if w_data.wallet_type not in list(WalletType):
+            raise HTTPException(
+                HTTPStatus.BAD_REQUEST,
+                f"Wallet type {w_data.wallet_type} does not exist.",
+            )
+        if w_data.wallet_type == WalletType.LIGHTNING_SHARED:
+            raise HTTPException(
+                HTTPStatus.BAD_REQUEST,
+                "Shared wallets are not currently supported in batch creation.",
+            )
+
+    async with db.connect() as conn:
+        for w_data in data.wallets:
+            wallet = await create_wallet(
+                user_id=account_id.id, wallet_name=w_data.name, conn=conn
+            )
+            wallets.append(wallet)
+
+    return wallets

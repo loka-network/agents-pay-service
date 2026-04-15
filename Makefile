@@ -38,6 +38,9 @@ checkeditorconfig:
 dev:
 	uv run lnbits --reload
 
+prod:
+	uv run uvicorn lnbits.__main__:app --host 0.0.0.0 --port 5000 --workers 8 --limit-concurrency 1000
+
 docker:
 	docker build -t lnbits/lnbits .
 

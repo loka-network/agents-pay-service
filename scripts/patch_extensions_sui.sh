@@ -184,6 +184,14 @@ else
     echo "  SKIP: $ORDERS_SVC"
 fi
 
+# ---------------------------------------------------------------------------
+# 6. Splitpayments (No patch required)
+# ---------------------------------------------------------------------------
+# The splitpayments extension calculates amounts purely based on percentages
+# and does not hardcode 'sat' or 'BTC' strings in its frontend UI.
+# Backend math uses 'amount_msat' which safely maps to mmist in our SUI fork.
+# Hence, no sed patching is needed for this extension.
+
 echo ""
 echo "=== Patch complete ==="
 echo "Restart LNbits server to apply changes."

@@ -217,6 +217,10 @@ class CreateWallet(BaseModel):
     shared_wallet_id: str | None = None
 
 
+class CreateWalletsBatch(BaseModel):
+    wallets: list[CreateWallet]
+
+
 class KeyType(Enum):
     admin = 0
     invoice = 1
