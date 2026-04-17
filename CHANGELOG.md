@@ -1,6 +1,8 @@
 # Changelog
 
 ## Unreleased
+- Updated `make prod` target in `Makefile` to run the Uvicorn application in the background using `nohup` and redirect logs to `lnbits_prod.log`.
+- Fixed postgres healthcheck in `tests/docker-compose.yaml` to specify correct db name and username to avoid `role "root" does not exist` error.
 - Added `scripts/patch_extensions_sui.sh` — idempotent patch script for SUI-adapting extensions (tpos, lnurlp, orders) after install/upgrade.
 - Adapted TPoS extension: replaced hardcoded 'sats' with dynamic denomination, fixed currency labels, receipt text, and formatAmount calls.
 - Adapted LNURLp extension: fixed default currency label and form submission for SUI base unit.

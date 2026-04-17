@@ -39,7 +39,7 @@ dev:
 	uv run lnbits --reload
 
 prod:
-	uv run uvicorn lnbits.__main__:app --host 0.0.0.0 --port 5002 --workers 8 --limit-concurrency 1000
+	nohup uv run uvicorn lnbits.__main__:app --host 0.0.0.0 --port 5002 --workers 8 --limit-concurrency 1000 >> lnbits_prod.log 2>&1 & echo "Server started in background (PID $$!). Logs are being appended to lnbits_prod.log"
 
 docker:
 	docker build -t lnbits/lnbits .
