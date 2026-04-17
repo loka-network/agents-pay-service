@@ -1,7 +1,7 @@
 # Changelog
 
 ## Unreleased
-- Updated `make prod` target in `Makefile` to run the Uvicorn application in the background using `nohup` and redirect logs to `lnbits_prod.log`.
+- Optimized `make prod` background logging in `Makefile`: application logs naturally rotate in `data/logs/` (via loguru), while terminal stdout is discarded (`/dev/null`) and stderr crash logs are output to `uvicorn_error.log` to prevent unbounded log growth.
 - Fixed postgres healthcheck in `tests/docker-compose.yaml` to specify correct db name and username to avoid `role "root" does not exist` error.
 - Added `scripts/patch_extensions_sui.sh` — idempotent patch script for SUI-adapting extensions (tpos, lnurlp, orders) after install/upgrade.
 - Adapted TPoS extension: replaced hardcoded 'sats' with dynamic denomination, fixed currency labels, receipt text, and formatAmount calls.
