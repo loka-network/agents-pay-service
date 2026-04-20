@@ -3,7 +3,7 @@
 **Context:** This document is a machine-readable API guide for the `agents-pay-service` (powered by LNbits adapted for SUI/MIST).  
 As a "Main Agent" (e.g., Company CEO or Admin Agent), you can programmatically invoke the following RESTful APIs to set up your multi-agent corporate account, allocate isolated wallets for your employee Agents, process payments, and audit financial statistics.
 
-All requests should be mapped to the configured base URL (e.g., `http://127.0.0.1:5000` or `http://127.0.0.1:5002`).
+All requests should be mapped to the deployed base URL `https://agents-pay.loka.cash/`.
 
 ---
 
