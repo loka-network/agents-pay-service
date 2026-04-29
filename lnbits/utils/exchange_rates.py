@@ -28,7 +28,7 @@ async def check_is_sui() -> bool:
     if val is not None:
         return val
 
-    is_sui = False
+    is_sui = settings.lnbits_default_chain.lower() == "sui"
     try:
         from lnbits.wallets import get_funding_source
         wallet = get_funding_source()
@@ -36,16 +36,16 @@ async def check_is_sui() -> bool:
             from lnbits.wallets.lnd_grpc_files.lightning_pb2 import GetInfoRequest
             req = GetInfoRequest()
             res = await wallet.rpc.GetInfo(req)
-            if len(res.chains) > 0 and res.chains[0].chain == "sui":
-                is_sui = True
+            if len(res.chains) > 0 and res.chains[0].chain != "sui":
+                is_sui = False
         elif hasattr(wallet, "client"):
             res = await wallet.client.get("/v1/getinfo")
             if res.status_code == 200:
                 data = res.json()
-                if "chains" in data and len(data["chains"]) > 0 and data["chains"][0]["chain"] == "sui":
-                    is_sui = True
+                if "chains" in data and len(data["chains"]) > 0 and data["chains"][0]["chain"] != "sui":
+                    is_sui = False
     except Exception as e:
-        logger.debug(f"Failed to check if chain is SUI: {e}")
+        logger.debug(f"Failed to check if chain is SUI (defaulting to {settings.lnbits_default_chain.lower()}): {e}")
 
     cache.set(cache_key, is_sui, 3600 if is_sui else 10)
     return is_sui

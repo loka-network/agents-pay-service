@@ -12,6 +12,18 @@
         ></q-input>
         <br />
       </div>
+      <div class="col-12 col-md-6">
+        <q-select
+          filled
+          v-model="formData.lnbits_default_chain"
+          :options="[{label: 'SUI', value: 'sui'}, {label: 'Bitcoin (BTC)', value: 'btc'}]"
+          emit-value
+          map-options
+          label="Default Chain Fallback"
+          hint="The default chain to fallback to if node connectivity is lost."
+        ></q-select>
+        <br />
+      </div>
     </div>
     <h6 class="q-my-none q-mb-sm">
       <span v-text="$t('authentication')"></span>
