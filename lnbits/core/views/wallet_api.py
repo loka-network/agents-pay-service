@@ -39,10 +39,12 @@ from lnbits.decorators import (
     require_invoice_key,
 )
 from lnbits.helpers import generate_filter_params_openapi
+from lnbits.settings import settings
 
 from ..crud import (
     delete_wallet,
     get_wallet,
+    get_wallets,
     update_wallet,
 )
 
@@ -224,6 +226,15 @@ async def api_create_wallet(
 async def api_create_wallets_batch(
     data: CreateWalletsBatch, account_id: AccountId = Depends(check_account_id_exists)
 ) -> list[Wallet]:
+    # 1. Enforce global wallet quota
+    MAX_USER_WALLETS = settings.lnbits_max_user_wallets
+    existing_wallets = await get_wallets(user_id=account_id.id)
+    if len(existing_wallets) + len(data.wallets) > MAX_USER_WALLETS:
+        raise HTTPException(
+            status_code=HTTPStatus.BAD_REQUEST,
+            detail=f"Wallet quota exceeded. You can only have up to {MAX_USER_WALLETS} wallets.",
+        )
+
     wallets = []
     
     for w_data in data.wallets:

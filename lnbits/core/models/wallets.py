@@ -218,7 +218,7 @@ class CreateWallet(BaseModel):
 
 
 class CreateWalletsBatch(BaseModel):
-    wallets: list[CreateWallet]
+    wallets: list[CreateWallet] = Field(max_items=100)
 
 
 class KeyType(Enum):

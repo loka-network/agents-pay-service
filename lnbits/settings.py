@@ -446,6 +446,7 @@ class ExchangeProvidersSettings(LNbitsSettings):
 class SecuritySettings(LNbitsSettings):
     lnbits_rate_limit_no: int = Field(default=200, ge=0)
     lnbits_rate_limit_unit: str = Field(default="minute")
+    lnbits_max_user_wallets: int = Field(default=1000, ge=1)
     lnbits_allowed_ips: list[str] = Field(default=[])
     lnbits_blocked_ips: list[str] = Field(default=[])
     lnbits_callback_url_rules: list[str] = Field(

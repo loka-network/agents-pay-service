@@ -1,6 +1,7 @@
 # Changelog
 
 ## Unreleased
+- Added security limits to batch wallet creation endpoint (`/api/v1/wallet/batch`): enforced a maximum array length of 100 per request, and added a global account quota of 1000 wallets per user to prevent DB exhaustion.
 - Updated the base URL in `skill/agents_pay_service_guide.md` to point to the newly deployed service endpoint (`https://agents-pay.loka.cash/`).
 - Optimized `make prod` background logging in `Makefile`: application logs naturally rotate in `data/logs/` (via loguru), while terminal stdout is discarded (`/dev/null`) and stderr crash logs are output to `uvicorn_error.log` to prevent unbounded log growth.
 - Fixed postgres healthcheck in `tests/docker-compose.yaml` to specify correct db name and username to avoid `role "root" does not exist` error.

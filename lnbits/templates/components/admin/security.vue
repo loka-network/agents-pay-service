@@ -372,6 +372,15 @@
                 :label="$t('time_unit')"
               ></q-select>
             </div>
+            <div class="col-12 col-md-6">
+              <q-input
+                filled
+                type="number"
+                v-model.number="formData.lnbits_max_user_wallets"
+                label="Max User Wallets"
+                hint="Global quota for the maximum number of wallets a single user can create."
+              ></q-input>
+            </div>
           </div>
         </div>
 
