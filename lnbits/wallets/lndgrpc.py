@@ -192,6 +192,7 @@ class LndWallet(Wallet):
             fee_limit_msat=fee_limit_msat,
             timeout_seconds=30,
             no_inflight_updates=True,
+            allow_self_payment=settings.lnd_grpc_allow_self_payment,
         )
         try:
             res: Payment = await self.router_rpc.SendPaymentV2(req).read()
