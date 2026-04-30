@@ -324,7 +324,8 @@ class AssetSettings(LNbitsSettings):
             "heif",
             "heics",
             "text/plain",
-            "text/json" "text/xml",
+            "text/json",
+            "text/xml",
             "application/json",
             "application/pdf",
         ]
@@ -596,6 +597,8 @@ class ZBDFundingSource(LNbitsSettings):
 class PhoenixdFundingSource(LNbitsSettings):
     phoenixd_api_endpoint: str | None = Field(default="http://localhost:9740/")
     phoenixd_api_password: str | None = Field(default=None)
+    phoenixd_data_dir: str | None = Field(default=None)
+    phoenixd_mnemonic: str | None = Field(default=None)
 
 
 class AlbyFundingSource(LNbitsSettings):
@@ -1015,9 +1018,7 @@ class EnvSettings(LNbitsSettings):
     debug_database: bool = Field(default=False)
     bundle_assets: bool = Field(default=True)
     # When enabled, auth cookies require HTTPS and SSO will reject insecure HTTP.
-    # Keep disabled by default so local HTTP installs continue to work unless
-    # operators explicitly opt into HTTPS-only auth cookies.
-    auth_https_only: bool = Field(default=False)
+    auth_https_only: bool = Field(default=True)
     host: str = Field(default="127.0.0.1")
     port: int = Field(default=5000, gt=0)
     forwarded_allow_ips: str = Field(default="*")
