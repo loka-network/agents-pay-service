@@ -584,13 +584,25 @@ async def calculate_fiat_amounts(
 ) -> tuple[int, dict]:
     wallet_currency = wallet.currency or settings.lnbits_default_accounting_currency
     fiat_amounts: dict = extra or {}
+
+    # Native unit configuration. On BTC, 1 BTC = 100M sat; on SUI, 1 SUI = 1B
+    # MIST. The "_btc_rate" / "btc_rate" extra fields used to hardcode 1e8
+    # as the multiplier, so on SUI deployments they reported a meaningless
+    # number. Drive everything off the chain-aware multiplier instead.
+    is_sui = await check_is_sui()
+    native_per_unit = 1_000_000_000 if is_sui else 100_000_000  # MIST/SUI vs sat/BTC
+    native_label = "sui" if is_sui else "btc"
+
     if currency and currency.upper() not in ["SAT", "MIST", "SUI"]:
         amount_sat = await fiat_amount_as_satoshis(amount, currency)
         if currency != wallet_currency:
             fiat_amounts["fiat_currency"] = currency
             fiat_amounts["fiat_amount"] = round(amount, ndigits=3)
             fiat_amounts["fiat_rate"] = amount_sat / amount
-            fiat_amounts["btc_rate"] = (amount / amount_sat) * 100_000_000
+            # Price of 1 whole native unit (BTC or SUI) in `currency`.
+            # `<chain>_rate` is kept as a chain-specific key so SUI
+            # deployments stop emitting a misnamed `btc_rate`.
+            fiat_amounts[f"{native_label}_rate"] = (amount / amount_sat) * native_per_unit
     else:
         amount_sat = int(amount)
 
@@ -603,7 +615,9 @@ async def calculate_fiat_amounts(
             fiat_amounts["wallet_fiat_currency"] = wallet_currency
             fiat_amounts["wallet_fiat_amount"] = round(fiat_amount, ndigits=3)
             fiat_amounts["wallet_fiat_rate"] = amount_sat / fiat_amount
-            fiat_amounts["wallet_btc_rate"] = (fiat_amount / amount_sat) * 100_000_000
+            fiat_amounts[f"wallet_{native_label}_rate"] = (
+                (fiat_amount / amount_sat) * native_per_unit
+            )
         except Exception as e:
             logger.error(f"Error calculating fiat amount for wallet '{wallet.id}': {e}")
 
