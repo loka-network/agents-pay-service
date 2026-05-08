@@ -155,8 +155,7 @@ include('components/lnbits-error.vue') %}
       <q-item-section>
         <q-item-label v-text="$t('amount')"></q-item-label>
         <q-item-label caption>
-          <span v-text="(payment.amount / 1000).toFixed(3)"></span>
-          <span v-text="g.denomination"></span>
+          <span v-text="utils.formatBalance(payment.amount / 1000, g.denomination)"></span>
         </q-item-label>
       </q-item-section>
     </q-item>
@@ -164,8 +163,7 @@ include('components/lnbits-error.vue') %}
       <q-item-section>
         <q-item-label v-text="$t('fee')"></q-item-label>
         <q-item-label caption>
-          <span v-text="(payment.fee / 1000).toFixed(3)"></span>
-          <span v-text="g.denomination"></span>
+          <span v-text="utils.formatBalance(payment.fee / 1000, g.denomination)"></span>
         </q-item-label>
       </q-item-section>
     </q-item>
