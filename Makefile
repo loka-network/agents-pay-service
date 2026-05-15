@@ -39,7 +39,7 @@ dev:
 	uv run lnbits --reload
 
 prod:
-	nohup uv run uvicorn lnbits.__main__:app --host 0.0.0.0 --port 5000 --workers 8 --limit-concurrency 1000 > /dev/null 2> uvicorn_error.log & echo "Server started! App logs in data/logs, Crash logs in uvicorn_error.log (PID $$!)"
+	nohup uv run uvicorn lnbits.__main__:app --host 127.0.0.1 --port 5000 --workers 8 --limit-concurrency 1000 > /dev/null 2> uvicorn_error.log & echo "Server started! App logs in data/logs, Crash logs in uvicorn_error.log (PID $$!)"
 
 docker:
 	docker build -t lnbits/lnbits .

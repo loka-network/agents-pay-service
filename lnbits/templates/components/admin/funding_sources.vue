@@ -44,7 +44,14 @@
           :key="i"
         >
           <div class="col-12">
+            <q-toggle
+              v-if="prop.type === 'boolean'"
+              v-model="formData[key]"
+              :label="prop.label"
+              class="q-mt-sm"
+            ></q-toggle>
             <q-input
+              v-else
               v-model="formData[key]"
               filled
               class="q-mt-sm"
@@ -92,7 +99,14 @@
             :key="`adv-${i}`"
           >
             <div class="col-12">
+              <q-toggle
+                v-if="prop.type === 'boolean'"
+                v-model="formData[key]"
+                :label="prop.label"
+                class="q-mt-sm"
+              ></q-toggle>
               <q-input
+                v-else
                 v-model="formData[key]"
                 filled
                 class="q-mt-sm"

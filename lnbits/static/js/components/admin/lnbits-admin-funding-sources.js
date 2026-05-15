@@ -90,11 +90,13 @@ window.app.component('lnbits-admin-funding-sources', {
             lnd_rest_macaroon_encrypted: 'Encrypted Macaroon',
             lnd_rest_route_hints: {
               advanced: true,
-              label: 'Enable Route Hints'
+              label: 'Enable Route Hints',
+              type: 'boolean'
             },
             lnd_rest_allow_self_payment: {
               advanced: true,
-              label: 'Allow Self Payment'
+              label: 'Allow Self Payment',
+              type: 'boolean'
             }
           }
         ],
@@ -111,7 +113,8 @@ window.app.component('lnbits-admin-funding-sources', {
             lnd_grpc_macaroon_encrypted: 'Encrypted Macaroon',
             lnd_grpc_allow_self_payment: {
               advanced: true,
-              label: 'Allow Self Payment'
+              label: 'Allow Self Payment',
+              type: 'boolean'
             }
           }
         ],
